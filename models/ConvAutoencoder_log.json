@@ -1,0 +1,15 @@
+{
+  "file": "ConvAutoencoder",
+  "model_class": "ConvAutoencoder",
+  "epoch": 13,
+  "metrics": {
+    "train_loss": 0.04448942610850701,
+    "eval_loss": 0.044652314426807255
+  },
+  "hidden_channels": [
+    64,
+    128,
+    256
+  ],
+  "learning_rate": 0.002
+}
