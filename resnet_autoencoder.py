@@ -9,9 +9,18 @@ class ResnetBlock(nn.Module):
         super().__init__()
         self.conv = ConvBlock(in_channels, out_channels, stride=stride, 
                               kernel_size=kernel_size, act_fn=nn.ReLU(True))
-        self.conv2 = ConvBlock(out_channels, out_channels, stride=stride, 
+        self.conv2 = ConvBlock(out_channels, out_channels, stride=1, 
                                kernel_size=kernel_size, act_fn=None)
-        self.shortcut = shortcut if shortcut else nn.Identity()
+        
+        # Create shortcut to match dimensions when needed
+        if shortcut is not None:
+            self.shortcut = shortcut
+        elif stride != 1 or in_channels != out_channels:
+            self.shortcut = ConvBlock(in_channels, out_channels, stride=stride, 
+                                      kernel_size=1, act_fn=None)
+        else:
+            self.shortcut = nn.Identity()
+            
         self.relu = nn.ReLU(True)
     
     def forward(self, x):
@@ -28,9 +37,18 @@ class ResnetTransposeBlock(nn.Module):
         super().__init__()
         self.conv_transpose = ConvTransposeBlock(in_channels, out_channels, stride=stride, 
                                                  kernel_size=kernel_size, act_fn=nn.ReLU(True))
-        self.conv2 = ConvBlock(out_channels, out_channels, stride=stride, 
+        self.conv2 = ConvBlock(out_channels, out_channels, stride=1, 
                                kernel_size=kernel_size, act_fn=None)
-        self.shortcut = shortcut if shortcut else nn.Identity()
+        
+        if shortcut is not None:
+            self.shortcut = shortcut
+        elif stride != 1 or in_channels != out_channels:
+            # Need to adjust dimensions for skip connection (upsampling case)
+            self.shortcut = ConvTransposeBlock(in_channels, out_channels, stride=stride, 
+                                               kernel_size=1, act_fn=None)
+        else:
+            self.shortcut = nn.Identity()
+            
         self.relu = nn.ReLU(True)
     
     def forward(self, x):
