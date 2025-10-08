@@ -1,0 +1,15 @@
+{
+  "file": "resnet_autoencoder_L1Loss",
+  "model_class": "ResnetAutoencoder",
+  "epoch": 18,
+  "metrics": {
+    "train_loss": 0.14237740249014819,
+    "eval_loss": 0.16291555303793687
+  },
+  "hidden_channels": [
+    64,
+    128,
+    256
+  ],
+  "learning_rate": 0.001
+}
