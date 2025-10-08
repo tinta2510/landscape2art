@@ -2,7 +2,7 @@ import torch.nn as nn
 from conv_autoencoder import ConvBlock, ConvTransposeBlock    
     
 class ResnetBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1, kernel_size=3, shortcut=None):
+    def __init__(self, in_channels, out_channels, stride=1, kernel_size=3, act_fn=None, shortcut=None):
         """
         Basic residual block for ResNet with two 3x3 conv layers and a skip connection.
         """
@@ -20,17 +20,18 @@ class ResnetBlock(nn.Module):
                                       kernel_size=1, act_fn=None)
         else:
             self.shortcut = nn.Identity()
-            
-        self.relu = nn.ReLU(True)
+        
+        if act_fn:
+            self.act_fn = act_fn    
     
     def forward(self, x):
         out = self.conv(x)
         out = self.conv2(out) + self.shortcut(x)
-        out = self.relu(out)
+        out = self.act_fn(out)
         return out
     
 class ResnetTransposeBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1, kernel_size=3, shortcut=None):
+    def __init__(self, in_channels, out_channels, stride=1, kernel_size=3, act_fn=None, shortcut=None):
         """
         Residual block with ConvTranspose2d for upsampling.
         """
@@ -49,12 +50,14 @@ class ResnetTransposeBlock(nn.Module):
         else:
             self.shortcut = nn.Identity()
             
-        self.relu = nn.ReLU(True)
+        
+        if act_fn:
+            self.act_fn = act_fn
     
     def forward(self, x):
         out = self.conv_transpose(x)
         out = self.conv2(out) + self.shortcut(x)
-        out = self.relu(out)
+        out = self.act_fn(out)
         return out
     
 class ResnetAutoencoder(nn.Module):
@@ -68,12 +71,12 @@ class ResnetAutoencoder(nn.Module):
 
         encoder_layers = [
             ResnetBlock(in_channel, hidden_channels[0], kernel_size=kernel_size,
-                        stride=stride),
+                        stride=stride, act_fn=nn.ReLU(True)),
         ]
         for i in range(len(hidden_channels)-1):
             encoder_layers.append(
                 ResnetBlock(hidden_channels[i], hidden_channels[i+1],
-                            kernel_size=kernel_size, stride=stride)
+                            kernel_size=kernel_size, stride=stride, act_fn=nn.ReLU(True))
             )
         self.encoder = nn.Sequential(*encoder_layers)
 
@@ -81,11 +84,11 @@ class ResnetAutoencoder(nn.Module):
         for i in range(len(hidden_channels)-1, 0, -1):
             decoder_layers.append(
                 ResnetTransposeBlock(hidden_channels[i], hidden_channels[i-1],
-                                     kernel_size=kernel_size, stride=stride)
+                                     kernel_size=kernel_size, stride=stride, act_fn=nn.ReLU(True))
             )
         decoder_layers.append(
             ResnetTransposeBlock(hidden_channels[0], out_channel, kernel_size=kernel_size, 
-                                 stride=stride)
+                                 stride=stride, act_fn=nn.Sigmoid())
         )
         self.decoder = nn.Sequential(*decoder_layers)
 
